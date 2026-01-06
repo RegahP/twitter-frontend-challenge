@@ -3,7 +3,7 @@ import axios from "axios";
 import { S3Service } from "./S3Service";
 
 const url =
-  process.env.REACT_APP_API_URL || "http://localhost:8080";
+  process.env.REACT_APP_API_URL || "http://localhost:8080/api";
 
 const httpRequestService = {
   signUp: async (data: Partial<SingUpData>) => {
