@@ -119,7 +119,7 @@ const httpRequestService = {
   },
   followUser: async (userId: string) => {
     const res = await axios.post(
-      `${url}/follow/${userId}`,
+      `${url}/follower/follow/${userId}`,
       {},
       {
         headers: {
@@ -132,7 +132,7 @@ const httpRequestService = {
     }
   },
   unfollowUser: async (userId: string) => {
-    const res = await axios.delete(`${url}/follow/${userId}`, {
+    const res = await axios.delete(`${url}/follower/unfollow/${userId}`, {
       headers: {
         Authorization: localStorage.getItem("token"),
       },
@@ -319,6 +319,7 @@ const httpRequestService = {
       return res.data;
     }
   },
+
   getCommentsByPostId: async (id: string) => {
     const res = await axios.get(`${url}/post/comment/by_post/${id}`, {
       headers: {
@@ -329,6 +330,17 @@ const httpRequestService = {
       return res.data;
     }
   },
+
+  isFollowing: async (followedId: string) => {
+    const res = await axios.get(`${url}/follower/is-following?followedId=${followedId}`, {
+      headers: {
+        Authorization: localStorage.getItem("token"),
+      },
+    });
+    if (res.status === 200) {
+      return res.data;
+    }
+  }
 };
 
 const useHttpRequestService = () => httpRequestService;
