@@ -23,7 +23,7 @@ const CommentPage = () => {
   const [user, setUser] = useState<User>()
   const postId = useLocation().pathname.split("/")[3];
   const service = useHttpRequestService();
-  const { length, query } = useAppSelector((state) => state.user);
+  const { length } = useAppSelector((state) => state.user);
   const dispatch = useAppDispatch();
   const { t } = useTranslation();
 
@@ -58,7 +58,7 @@ const CommentPage = () => {
     setContent("");
     setImages([]);
     dispatch(setLength(length + 1));
-    const posts = await service.getPosts(query);
+    const posts = await service.getPosts(10);
     dispatch(updateFeed(posts));
     exit();
   };

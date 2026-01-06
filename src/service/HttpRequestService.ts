@@ -49,10 +49,15 @@ const httpRequestService = {
       return res.data;
     }
   },
-  getPosts: async (query: string) => {
-    const res = await axios.get(`${url}/post/${query}`, {
+  getPosts: async (limit: number, before?: string, after?: string) => {
+    const res = await axios.get(`${url}/post`, {
       headers: {
         Authorization: localStorage.getItem("token"),
+      },
+      params: {
+        limit,
+        before,
+        after,
       },
     });
     if (res.status === 200) {

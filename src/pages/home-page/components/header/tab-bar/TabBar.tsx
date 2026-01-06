@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Tab from "./tab/Tab";
 import { setQuery, updateFeed } from "../../../../../redux/user";
 import { useHttpRequestService } from "../../../../../service/HttpRequestService";
@@ -15,7 +15,7 @@ const TabBar = () => {
   const handleClick = async (value: boolean, query: string) => {
     setActiveFirstPage(value);
     dispatch(setQuery(query));
-    const data = await service.getPosts(query).catch((e) => {
+    const data = await service.getPosts(10).catch((e) => {
       console.log(e);
     });
     dispatch(updateFeed(data));
