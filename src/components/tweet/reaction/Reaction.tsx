@@ -21,9 +21,9 @@ const Reaction = ({
 
   const handleReaction = async () => {
     try {
-      await reactionFunction();
+      reactionFunction();
       setReactionCount(
-        reactionReacted ? reactionCount - increment : reactionCount + 1
+        reactionReacted ? reactionCount - increment : reactionCount + increment
       );
       setReactionReacted(!reactionReacted);
     } catch (error) {

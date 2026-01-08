@@ -1,9 +1,9 @@
 import {createSlice} from "@reduxjs/toolkit";
 import {LIMIT} from "../util/Constants";
-import {ChatDTO, Post} from "../service";
+import {ChatDTO, ExtendedPostDTO} from "../service";
 
 type InitalStateType = {
-  feed: Post[];
+  feed: ExtendedPostDTO[];
   query: string;
   length: number;
   currentChat?: ChatDTO;

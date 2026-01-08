@@ -7,7 +7,7 @@ import { useHttpRequestService } from "../../../service/HttpRequestService";
 import { useTranslation } from "react-i18next";
 import { ButtonType } from "../../button/StyledButton";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
-import { Post } from "../../../service";
+import { ExtendedPostDTO } from "../../../service";
 import { StyledDeletePostModalContainer } from "./DeletePostModalContainer";
 
 interface DeletePostModalProps {
@@ -30,7 +30,7 @@ export const DeletePostModal = ({
   const handleDelete = () => {
     try {
       service.deletePost(id).then((res) => console.log(res));
-      const newFeed = feed.filter((post: Post) => post.id !== id);
+      const newFeed = feed.filter((post: ExtendedPostDTO) => post.id !== id);
       dispatch(updateFeed(newFeed));
       handleClose();
     } catch (error) {
