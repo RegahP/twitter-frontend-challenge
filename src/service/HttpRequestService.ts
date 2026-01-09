@@ -131,19 +131,25 @@ const httpRequestService = {
   followUser: async (userId: string) => {
     const res = await axiosInstance.post(
       `/follower/follow/${userId}`,
-      {},
       {
         headers: {
           Authorization: localStorage.getItem("token"),
         },
       }
     );
-    if (res.status === 201) {
+    if (res.status === 200) {
       return res.data;
     }
   },
   unfollowUser: async (userId: string) => {
-    const res = await axiosInstance.delete(`/follower/unfollow/${userId}`, {});
+    const res = await axiosInstance.post(
+      `/follower/unfollow/${userId}`,
+      {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      }
+    );
     if (res.status === 200) {
       return res.data;
     }
