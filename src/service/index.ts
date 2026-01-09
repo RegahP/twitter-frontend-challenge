@@ -120,6 +120,20 @@ export class ExtendedUserDTO extends UserDTO {
   password!: string
 }
 
+export class UserViewDTO {
+  constructor (user: User) {
+    this.id = user.id
+    this.name = user.name ?? 'Unknown'
+    this.username = user.username
+    this.profilePicture = user.profilePicture ?? null
+  }
+
+  id: string
+  name: string
+  username: string
+  profilePicture: string | null
+}
+
 export class PostDTO {
   constructor (post: Pick<Post, 'id' | 'authorId' | 'content' | 'images' | 'createdAt'>) {
     this.id = post.id

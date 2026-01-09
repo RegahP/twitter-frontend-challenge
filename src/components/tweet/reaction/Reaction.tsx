@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { Icon, IconType } from "../../icon/Icon";
 import { StyledReactionContainer } from "./ReactionContainer";
 
@@ -6,26 +5,17 @@ interface ReactionProps {
   img: IconType;
   count: number;
   reacted: boolean;
-  reactionFunction: () => void;
-  increment: number;
+  reactionFunction: () => void | Promise<void>;
 }
 const Reaction = ({
   img,
   count,
   reacted,
   reactionFunction,
-  increment,
 }: ReactionProps) => {
-  const [reactionCount, setReactionCount] = useState(count);
-  const [reactionReacted, setReactionReacted] = useState(reacted);
-
   const handleReaction = async () => {
     try {
-      reactionFunction();
-      setReactionCount(
-        reactionReacted ? reactionCount - increment : reactionCount + increment
-      );
-      setReactionReacted(!reactionReacted);
+      await reactionFunction();
     } catch (error) {
       console.log(error);
     }
@@ -38,10 +28,10 @@ const Reaction = ({
           width: "16px",
           height: "16px",
           onClick: handleReaction,
-          active: reactionReacted,
+          active: reacted,
         })[img]
       }
-      <p>{reactionCount}</p>
+      <p>{count}</p>
     </StyledReactionContainer>
   );
 };

@@ -1,7 +1,7 @@
 import {useEffect, useState} from "react";
 import {StyledTweetContainer} from "./TweetContainer";
 import AuthorData from "./user-post-data/AuthorData";
-import type {ExtendedPostDTO, PostReaction, User} from "../../service";
+import type {ExtendedPostDTO, UserViewDTO} from "../../service";
 import {StyledReactionsContainer} from "./ReactionsContainer";
 import Reaction from "./reaction/Reaction";
 import {useHttpRequestService} from "../../service/HttpRequestService";
@@ -12,6 +12,7 @@ import DeletePostModal from "./delete-post-modal/DeletePostModal";
 import ImageContainer from "./tweet-image/ImageContainer";
 import CommentModal from "../comment/comment-modal/CommentModal";
 import {useNavigate} from "react-router-dom";
+import {usePostReaction} from "../../hooks/usePostReaction";
 
 interface TweetProps {
   post: ExtendedPostDTO;
@@ -23,30 +24,19 @@ const Tweet = ({post}: TweetProps) => {
   const [showCommentModal, setShowCommentModal] = useState<boolean>(false);
   const service = useHttpRequestService();
   const navigate = useNavigate();
-  const [user, setUser] = useState<User>()
-  const [postReaction, setPostReaction] = useState<PostReaction>()
+  const [user, setUser] = useState<UserViewDTO>()
+  const {hasReacted, toggle} = usePostReaction(post.id);
 
   useEffect(() => {
     handleGetUser().then(r => setUser(r))
-    handleGetPostReaction().then(r => setPostReaction(r))
   }, []);
 
   useEffect(() => {
-    handleGetPostReaction().then(r => setPostReaction(r))
-  }, [actualPost]);
+    setActualPost(post);
+  }, [post]);
 
   const handleGetUser = async () => {
     return await service.me()
-  }
-  const handleGetPostReaction = async () => {
-    const like: boolean = await service.getReaction(post.id, 'like')
-    const retweet: boolean = await service.getReaction(post.id, 'retweet')
-    return {
-      userId: user?.id ?? '',
-      postId: post.id,
-      like,
-      retweet,
-    } as PostReaction;
   }
 
   const getCountByType = (type: string): number => {
@@ -54,36 +44,53 @@ const Tweet = ({post}: TweetProps) => {
   };
 
   const handleReaction = async (type: string) => {
-    const reaction = postReaction ? (type === "like" ? postReaction.like : postReaction.retweet) : false;
-    if (reaction) {
-      await service.deleteReaction(actualPost.id, type);
-      handleUpdateReaction(type, false);
-    } else {
-      await service.createReaction(actualPost.id, type);
-      handleUpdateReaction(type, true);
-    }
-    const newPost: ExtendedPostDTO = await service.getPostById(post.id);
-    setActualPost(newPost);
-  };
+    if (type !== "like" && type !== "retweet") return;
 
-  const handleUpdateReaction = (type: string, reacted: boolean) => {
-    if (postReaction) {
+    const prevReacted = hasReacted(type);
+    const nextReacted = !prevReacted;
+
+    setActualPost((current) => {
       if (type === "like") {
-        setPostReaction({
-          ...postReaction,
-          like: reacted,
-        });
-      } else {
-        setPostReaction({
-          ...postReaction,
-          retweet: reacted,
-        });
+        return {
+          ...current,
+          qtyLikes: Math.max(0, (current.qtyLikes ?? 0) + (nextReacted ? 1 : -1)),
+        };
       }
-    }
-  };
 
-  const hasReactedByType = (type: string): boolean => {
-    return postReaction ? (type === "like" ? postReaction.like : postReaction.retweet) : false;
+      return {
+        ...current,
+        qtyRetweets: Math.max(
+          0,
+          (current.qtyRetweets ?? 0) + (nextReacted ? 1 : -1)
+        ),
+      };
+    });
+
+    try {
+      await toggle(type);
+      const newPost: ExtendedPostDTO = await service.getPostById(post.id);
+      setActualPost(newPost);
+    } catch (e) {
+      setActualPost((current) => {
+        if (type === "like") {
+          return {
+            ...current,
+            qtyLikes: Math.max(
+              0,
+              (current.qtyLikes ?? 0) + (prevReacted ? 1 : -1)
+            ),
+          };
+        }
+        return {
+          ...current,
+          qtyRetweets: Math.max(
+            0,
+            (current.qtyRetweets ?? 0) + (prevReacted ? 1 : -1)
+          ),
+        };
+      });
+      throw e;
+    }
   };
 
   return (
@@ -136,22 +143,19 @@ const Tweet = ({post}: TweetProps) => {
                       ? setShowCommentModal(true)
                       : navigate(`/compose/comment/${post.id}`)
               }
-              increment={0}
               reacted={false}
           />
           <Reaction
               img={IconType.RETWEET}
               count={getCountByType("retweet")}
               reactionFunction={() => handleReaction("retweet")}
-              increment={1}
-              reacted={hasReactedByType("retweet")}
+              reacted={hasReacted("retweet")}
           />
           <Reaction
               img={IconType.LIKE}
               count={getCountByType("like")}
               reactionFunction={() => handleReaction("like")}
-              increment={1}
-              reacted={hasReactedByType("like")}
+              reacted={hasReacted("like")}
           />
         </StyledReactionsContainer>
         <CommentModal

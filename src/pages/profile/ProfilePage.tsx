@@ -1,9 +1,9 @@
-import React, {useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import ProfileInfo from "./ProfileInfo";
 import {useNavigate, useParams} from "react-router-dom";
 import Modal from "../../components/modal/Modal";
 import {useTranslation} from "react-i18next";
-import {User} from "../../service";
+import {User, UserViewDTO} from "../../service";
 import {ButtonType} from "../../components/button/StyledButton";
 import {useHttpRequestService} from "../../service/HttpRequestService";
 import Button from "../../components/button/Button";
@@ -22,7 +22,7 @@ const ProfilePage = () => {
     buttonText: "",
   });
   const service = useHttpRequestService()
-  const [user, setUser] = useState<User>()
+  const [user, setUser] = useState<UserViewDTO>()
 
   const id = useParams().id;
   const navigate = useNavigate();

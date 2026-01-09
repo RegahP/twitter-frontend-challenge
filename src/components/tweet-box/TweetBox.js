@@ -23,8 +23,8 @@ const TweetBox = (props) => {
     const httpService = useHttpRequestService();
     const dispatch = useDispatch();
     const {t} = useTranslation();
-    const service = useHttpRequestService()
-    const [user, setUser] = useState()
+    const service = useHttpRequestService();
+    const [user, setUser] = useState();
 
 
     useEffect(() => {

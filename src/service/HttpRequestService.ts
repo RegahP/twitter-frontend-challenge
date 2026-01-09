@@ -8,6 +8,11 @@ const axiosInstance = axios.create({
   baseURL: url,
 });
 
+const token = localStorage.getItem("token");
+if (token) {
+  axiosInstance.defaults.headers.common["Authorization"] = token;
+}
+
 const httpRequestService = {
   signUp: async (data: Partial<SingUpData>) => {
     const res = await axiosInstance.post(`/auth/signup`, data);
@@ -88,8 +93,9 @@ const httpRequestService = {
   },
   getReaction: async (postId: string, type: string) => {
     const res = await axiosInstance.get(`/reaction/${postId}`, {
-      params: {
-        type,
+      params: { type },
+      headers: {
+        Authorization: localStorage.getItem("token"),
       },
     });
     if (res.status === 200) {
@@ -97,23 +103,27 @@ const httpRequestService = {
     }
   },
   createReaction: async (postId: string, type: string) => {
-    console.log(localStorage.getItem("token"));
-    const token = localStorage.getItem("token");
-    const res = await axiosInstance.post(`/reaction/${postId}?type=${type}`, {
-      headers: {
-        Authorization: token,
-      },
-    });
-    console.log(res.request.headers);
+    const res = await axiosInstance.post(
+      `/reaction/${postId}`,
+      {},
+      {
+        params: { type },
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      }
+    );
     if (res.status === 201) {
       return res.data;
     }
   },
   deleteReaction: async (postId: string, type: string) => {
-    const res = await axiosInstance.delete(
-      `/reaction/${postId}?type=${type}`,
-      {}
-    );
+    const res = await axiosInstance.delete(`/reaction/${postId}`, {
+      params: { type },
+      headers: {
+        Authorization: localStorage.getItem("token"),
+      },
+    });
     if (res.status === 200) {
       return res.data;
     }
