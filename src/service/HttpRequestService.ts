@@ -1,4 +1,10 @@
-import type { PostData, SingInData, SingUpData } from "./index";
+import type {
+  PostData,
+  PresignedDeleteResult,
+  PresignedPutResult,
+  SingInData,
+  SingUpData,
+} from "./index";
 import axios from "axios";
 import { S3Service } from "./S3Service";
 
@@ -12,6 +18,28 @@ const token = localStorage.getItem("token");
 if (token) {
   axiosInstance.defaults.headers.common["Authorization"] = token;
 }
+
+const S3_PUBLIC_BASE_URL = (process.env.REACT_APP_S3_PUBLIC_BASE_URL || "").replace(/\/$/, "");
+
+const normalizeImageUrl = (value: string): string => {
+  if (!value) return value;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (!S3_PUBLIC_BASE_URL) return value;
+  return `${S3_PUBLIC_BASE_URL}/${value.replace(/^\/+/, "")}`;
+};
+
+const normalizePostImages = <T extends { images?: string[] }>(post: T): T => {
+  if (!post?.images?.length) return post;
+  return { ...post, images: post.images.map(normalizeImageUrl) };
+};
+
+const denormalizeImageKey = (value: string): string => {
+  if (!value) return value;
+  if (S3_PUBLIC_BASE_URL && value.startsWith(`${S3_PUBLIC_BASE_URL}/`)) {
+    return value.slice(S3_PUBLIC_BASE_URL.length + 1);
+  }
+  return value.replace(/^\/+/, "");
+};
 
 const httpRequestService = {
   signUp: async (data: Partial<SingUpData>) => {
@@ -34,17 +62,65 @@ const httpRequestService = {
       return true;
     }
   },
+
+  // request uploadurls per image -> save s3 keys -> put image bytes to s3 -> post tweet with s3 keys
   createPost: async (data: PostData) => {
-    const res = await axiosInstance.post(`/post`, data);
-    if (res.status === 201) {
+    const contentTypes = data.images?.map((image) => image.type) || [];
+
+    const imgRes = await axiosInstance.post('/post/images/upload-urls', { contentTypes });
+    if (imgRes.status === 200) {
+      const uploads: PresignedPutResult[] = imgRes.data.uploads;
+      const uploadUrls = uploads.map((upload) => upload.uploadUrl);
+      const imageKeys = uploads.map((upload) => upload.key);
       const { upload } = S3Service;
-      for (const imageUrl of res.data.images) {
-        const index: number = res.data.images.indexOf(imageUrl);
+      for (const imageUrl of uploadUrls) {
+        const index: number = uploadUrls.indexOf(imageUrl);
         await upload(data.images![index], imageUrl);
       }
-      return res.data;
+      const postPayload = {
+        content: data.content,
+        parentId: data.parentId,
+        // Store keys in the DB so the backend can delete objects on post deletion.
+        images: imageKeys,
+      };
+      const res = await axiosInstance.post(`/post`, postPayload);
+      if (res.status === 201) {
+        return normalizePostImages(res.data);
+      }
     }
   },
+
+  deletePost: async (id: string) => {
+    // Best-effort cleanup: request presigned DELETE URLs for any stored image keys,
+    // delete objects, then delete the post.
+    try {
+      const postRes = await axiosInstance.get(`/post/${id}`, {});
+      const images: string[] = Array.isArray(postRes.data?.images)
+        ? postRes.data.images
+        : [];
+      const imageKeys = images.map(denormalizeImageKey).filter(Boolean);
+
+      if (imageKeys.length > 0) {
+        // Backend endpoint expected:
+        // POST /post/images/delete-urls { keys: string[] } -> { deletes: PresignedDeleteResult[] }
+        const delRes = await axiosInstance.post(`/post/images/delete-urls`, {
+          keys: imageKeys,
+        });
+
+        const deletes: PresignedDeleteResult[] = Array.isArray(delRes.data?.deletes)
+          ? delRes.data.deletes
+          : [];
+
+        await Promise.all(deletes.map((d) => S3Service.deleteByUrl(d.deleteUrl)));
+      }
+    } catch (e) {
+      // If cleanup fails (endpoint missing, etc.), still attempt to delete the post.
+      console.log(e);
+    }
+
+    await axiosInstance.delete(`/post/${id}`, {});
+  },
+
   getPaginatedPosts: async (limit: number, after: string, query: string) => {
     const res = await axiosInstance.get(`/post/${query}`, {
       params: {
@@ -53,7 +129,7 @@ const httpRequestService = {
       },
     });
     if (res.status === 200) {
-      return res.data;
+      return Array.isArray(res.data) ? res.data.map(normalizePostImages) : res.data;
     }
   },
   getPosts: async (limit: number, before?: string, after?: string) => {
@@ -65,7 +141,7 @@ const httpRequestService = {
       },
     });
     if (res.status === 200) {
-      return res.data;
+      return Array.isArray(res.data) ? res.data.map(normalizePostImages) : res.data;
     }
   },
   getRecommendedUsers: async (limit: number, skip: number) => {
@@ -88,7 +164,7 @@ const httpRequestService = {
   getPostById: async (id: string) => {
     const res = await axiosInstance.get(`/post/${id}`, {});
     if (res.status === 200) {
-      return res.data;
+      return normalizePostImages(res.data);
     }
   },
   getReaction: async (postId: string, type: string) => {
@@ -197,14 +273,14 @@ const httpRequestService = {
     });
 
     if (res.status === 200) {
-      return res.data;
+      return Array.isArray(res.data) ? res.data.map(normalizePostImages) : res.data;
     }
   },
   getPostsFromProfile: async (id: string) => {
     const res = await axiosInstance.get(`/post/by_user/${id}`, {});
 
     if (res.status === 200) {
-      return res.data;
+      return Array.isArray(res.data) ? res.data.map(normalizePostImages) : res.data;
     }
   },
 
@@ -269,10 +345,6 @@ const httpRequestService = {
     if (res.status === 200) {
       return res.data;
     }
-  },
-
-  deletePost: async (id: string) => {
-    await axiosInstance.delete(`/post/${id}`, {});
   },
 
   getPaginatedCommentsByPostId: async (

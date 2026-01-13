@@ -164,3 +164,14 @@ export class ExtendedPostDTO extends PostDTO {
   qtyLikes!: number
   qtyRetweets!: number
 }
+
+export interface PresignedPutResult {
+  key: string
+  uploadUrl: string
+  publicUrl: string
+}
+
+export interface PresignedDeleteResult {
+  key: string
+  deleteUrl: string
+}
