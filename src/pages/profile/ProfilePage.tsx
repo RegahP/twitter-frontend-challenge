@@ -3,7 +3,7 @@ import ProfileInfo from "./ProfileInfo";
 import {useNavigate, useParams} from "react-router-dom";
 import Modal from "../../components/modal/Modal";
 import {useTranslation} from "react-i18next";
-import {User, UserViewDTO} from "../../service";
+import {ExtendedUserDTO, User, UserDTO, UserViewDTO} from "../../service";
 import {ButtonType} from "../../components/button/StyledButton";
 import {useHttpRequestService} from "../../service/HttpRequestService";
 import Button from "../../components/button/Button";
@@ -12,7 +12,8 @@ import {StyledContainer} from "../../components/common/Container";
 import {StyledH5} from "../../components/common/text";
 
 const ProfilePage = () => {
-  const [profile, setProfile] = useState<User | null>(null);
+  const [profile, setProfile] = useState<ExtendedUserDTO | null>(null);
+  const [followers, setFollowers] = useState<UserDTO[]>([]);
   const [following, setFollowing] = useState<boolean>(false);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalValues, setModalValues] = useState({
@@ -88,6 +89,7 @@ const ProfilePage = () => {
       } else {
         await service.followUser(id);
         service.getProfile(id).then((res) => setProfile(res));
+        service.getFollowers(id).then((res: UserDTO[] | undefined) => setFollowers(res ?? []));
       }
       return await getProfileData();
     }
@@ -139,7 +141,7 @@ const ProfilePage = () => {
                     <ProfileInfo
                         name={profile!.name!}
                         username={profile!.username}
-                        profilePicture={profile!.profilePicture}
+                        profilePicture={profile!.profileImageUrl!}
                     />
                     <Button
                         buttonType={handleButtonType().component}
@@ -150,7 +152,7 @@ const ProfilePage = () => {
                   </StyledContainer>
                 </StyledContainer>
                 <StyledContainer width={"100%"}>
-                  {profile.followers ? (
+                  {followers.length > 0 || profile.id === user?.id ? (
                       <ProfileFeed/>
                   ) : (
                       <StyledH5>Private account</StyledH5>

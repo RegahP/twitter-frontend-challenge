@@ -132,10 +132,11 @@ const httpRequestService = {
       return Array.isArray(res.data) ? res.data.map(normalizePostImages) : res.data;
     }
   },
-  getPosts: async (limit: number, before?: string, after?: string) => {
+  getPosts: async (limit: number, self: boolean = false, before?: string, after?: string) => {
     const res = await axiosInstance.get(`/post`, {
       params: {
         limit,
+        self,
         before,
         after,
       },
@@ -255,7 +256,7 @@ const httpRequestService = {
   },
 
   getProfile: async (id: string) => {
-    const res = await axiosInstance.get(`/user/profile/${id}`, {});
+    const res = await axiosInstance.get(`/user/${id}`, {});
     if (res.status === 200) {
       return res.data;
     }
@@ -379,6 +380,20 @@ const httpRequestService = {
         },
       }
     );
+    if (res.status === 200) {
+      return res.data;
+    }
+  },
+
+  getFollowers: async (userId: string) => {
+    const res = await axiosInstance.get(`/follower/followers/${userId}`, {});
+    if (res.status === 200) {
+      return res.data;
+    }
+  },
+
+  getFollowing: async (userId: string) => {
+    const res = await axiosInstance.get(`/follower/following/${userId}`, {});
     if (res.status === 200) {
       return res.data;
     }

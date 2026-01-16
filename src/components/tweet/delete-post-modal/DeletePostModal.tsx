@@ -29,7 +29,7 @@ export const DeletePostModal = ({
 
   const handleDelete = () => {
     try {
-      service.deletePost(id).then((res) => console.log(res));
+      service.deletePost(id);
       const newFeed = feed.filter((post: ExtendedPostDTO) => post.id !== id);
       dispatch(updateFeed(newFeed));
       handleClose();

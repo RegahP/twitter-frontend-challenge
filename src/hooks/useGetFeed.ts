@@ -17,8 +17,7 @@ export const useGetFeed = () => {
     try {
       setLoading(true);
       setError(false);
-      service.getPosts(10).then((res) => {
-        console.log(res);
+      service.getPosts(10, true).then((res) => {
         const updatedPosts = Array.from(new Set([...posts, ...res]));
         dispatch(updateFeed(updatedPosts));
         dispatch(setLength(updatedPosts.length));
