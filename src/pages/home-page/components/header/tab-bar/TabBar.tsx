@@ -15,7 +15,7 @@ const TabBar = () => {
   const handleClick = async (value: boolean, query: string) => {
     setActiveFirstPage(value);
     dispatch(setQuery(query));
-    const data = await service.getPosts(10, query !== "following").catch((e) => {
+    const data = await service.getPosts(10).catch((e) => {
       console.log(e);
     });
     dispatch(updateFeed(data));

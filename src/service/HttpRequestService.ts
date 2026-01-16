@@ -206,27 +206,21 @@ const httpRequestService = {
     }
   },
   followUser: async (userId: string) => {
-    const res = await axiosInstance.post(
-      `/follower/follow/${userId}`,
-      {
-        headers: {
-          Authorization: localStorage.getItem("token"),
-        },
-      }
-    );
+    const res = await axiosInstance.post(`/follower/follow/${userId}`, {}, {
+      headers: {
+        Authorization: localStorage.getItem("token"),
+      },
+    });
     if (res.status === 200) {
       return res.data;
     }
   },
   unfollowUser: async (userId: string) => {
-    const res = await axiosInstance.post(
-      `/follower/unfollow/${userId}`,
-      {
-        headers: {
-          Authorization: localStorage.getItem("token"),
-        },
-      }
-    );
+    const res = await axiosInstance.post(`/follower/unfollow/${userId}`, {}, {
+      headers: {
+        Authorization: localStorage.getItem("token"),
+      },
+    });
     if (res.status === 200) {
       return res.data;
     }
@@ -381,7 +375,11 @@ const httpRequestService = {
       }
     );
     if (res.status === 200) {
-      return res.data;
+      const data = res.data;
+      if (typeof data === "boolean") return { isFollowing: data };
+      if (data && typeof data.isFollowing === "boolean") return { isFollowing: data.isFollowing };
+      if (data && typeof data.following === "boolean") return { isFollowing: data.following };
+      return { isFollowing: Boolean(data) };
     }
   },
 
