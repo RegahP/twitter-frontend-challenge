@@ -19,10 +19,7 @@ export const useGetProfilePosts = () => {
     service
       .getPostsFromProfile(id)
       .then((res) => {
-        console.log(res);
-        const updatedPosts = Array.from(new Set([...posts, ...res])).filter(
-          (post) => post.authorId === id
-        );
+        const updatedPosts = res;
         dispatch(updateFeed(updatedPosts));
         setLoading(false);
       })

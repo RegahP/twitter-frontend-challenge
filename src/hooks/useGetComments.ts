@@ -20,10 +20,8 @@ export const useGetComments = ({ postId }: UseGetCommentsProps) => {
     try {
       setLoading(true);
       setError(false);
-      service.getCommentsByPostId(postId).then((res) => {
-        const updatedPosts = Array.from(new Set([...posts, ...res])).filter(
-          (post) => post.parentId === postId
-        );
+      service.getCommentsByPostId(postId, 10, 0).then((res) => {
+        const updatedPosts = res;
         dispatch(updateFeed(updatedPosts));
         dispatch(setLength(updatedPosts.length));
         setLoading(false);

@@ -79,13 +79,18 @@ const httpRequestService = {
       }
       const postPayload = {
         content: data.content,
-        parentId: data.parentId,
-        // Store keys in the DB so the backend can delete objects on post deletion.
         images: imageKeys,
       };
-      const res = await axiosInstance.post(`/post`, postPayload);
-      if (res.status === 201) {
+      if (data.parentId) {
+        const res = await axiosInstance.post(`/post/${data.parentId}/comment`, postPayload);
+        if (res.status === 201) {
         return normalizePostImages(res.data);
+        }
+      } else {
+        const res = await axiosInstance.post(`/post`, postPayload);
+        if (res.status === 201) {
+        return normalizePostImages(res.data);
+        }
       }
     }
   },
@@ -358,8 +363,13 @@ const httpRequestService = {
     }
   },
 
-  getCommentsByPostId: async (id: string) => {
-    const res = await axiosInstance.get(`/post/comment/by_post/${id}`, {});
+  getCommentsByPostId: async (id: string, limit: number, skip: number) => {
+    const res = await axiosInstance.get(`/post/${id}/comments`, {
+      params: {
+        limit,
+        skip,
+      },
+    });
     if (res.status === 200) {
       return res.data;
     }

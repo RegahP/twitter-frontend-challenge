@@ -109,7 +109,7 @@ const Tweet = ({post}: TweetProps) => {
               createdAt={post.createdAt}
               profilePicture={post.author.profileImageUrl ?? undefined}
           />
-          {post.authorId === user?.id && (
+          {post.author.id === user?.id && (
               <>
                 <DeletePostModal
                     show={showDeleteModal}

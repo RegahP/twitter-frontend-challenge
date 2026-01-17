@@ -40,7 +40,7 @@ const TweetBox = (props) => {
     };
     const handleSubmit = async () => {
         try {
-            await httpService.createPost({ content, images });
+            await httpService.createPost({ content, parentId, images });
             setContent("");
             setImages([]);
             setImagesPreview([]);
